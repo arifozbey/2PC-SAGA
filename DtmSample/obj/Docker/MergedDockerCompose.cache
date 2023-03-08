@@ -1,0 +1,90 @@
+name: dockercompose18301596539776848043
+services:
+  db:
+    command:
+    - --character-set-server=utf8mb4
+    - --collation-server=utf8mb4_unicode_ci
+    - --default-authentication-plugin=mysql_native_password
+    container_name: dtm-csharp-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+    image: mysql:8
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 3306
+      published: "3306"
+      protocol: tcp
+    volumes:
+    - type: bind
+      source: C:\Users\arifbilgehanozbey\Downloads\dtmcli-csharp-sample-main\dtmcli-csharp-sample-main\DtmSample\docker\mysql\scripts
+      target: /docker-entrypoint-initdb.d
+      bind:
+        create_host_path: true
+  dtm:
+    container_name: dtm-csharp
+    depends_on:
+      db:
+        condition: service_started
+    environment:
+      IS_DOCKER: "1"
+      STORE_DB: dtm
+      STORE_DRIVER: mysql
+      STORE_HOST: db
+      STORE_PASSWORD: "123456"
+      STORE_PORT: "3306"
+      STORE_USER: root
+    image: yedf/dtm:latest
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 36789
+      published: "36789"
+      protocol: tcp
+    - mode: ingress
+      target: 36790
+      published: "36790"
+      protocol: tcp
+  mgdb:
+    container_name: dtm-csharp-mongo
+    environment:
+      MONGO_INITDB_DATABASE: dtm_barrier
+    image: yedf/mongo-rs:0.0.3
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 27017
+      published: "27017"
+      protocol: tcp
+    volumes:
+    - type: bind
+      source: C:\Users\arifbilgehanozbey\Downloads\dtmcli-csharp-sample-main\dtmcli-csharp-sample-main\DtmSample\docker\mongo\dtmcli.barrier.mongo.js
+      target: /docker-entrypoint-initdb.d/dtmcli.barrier.mongo.js
+      bind:
+        create_host_path: true
+  sample:
+    build:
+      context: C:\Users\arifbilgehanozbey\Downloads\dtmcli-csharp-sample-main\dtmcli-csharp-sample-main\DtmSample
+      dockerfile: ./DtmSample/Dockerfile
+    container_name: dtm-csharp-sample
+    depends_on:
+      db:
+        condition: service_started
+      dtm:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: docker
+      Logging__Console__FormatterName: null
+    networks:
+      default: null
+    ports:
+    - mode: ingress
+      target: 9090
+      published: "9090"
+      protocol: tcp
+networks:
+  default:
+    name: dockercompose18301596539776848043_default
